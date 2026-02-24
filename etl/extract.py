@@ -10,16 +10,22 @@ TARGET_PARAMETERS = {
 }
 
 
-def fetch_station_measures():
+def station_measures(station_id):
    
     # Retrieve all available measures for the station.
     url = f"{BASE_URL}/id/measures"
     params = {"station": STATION_ID}
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        logging.info("Successfully fetched station measures.")
+    except requests.RequestException as e:
+        logging.error(f"Error fetching station measures: {e}")
+        raise
 
-    return response.json().get("items", [])
+    data = response.json()
+    return data["items"]
 
 
 def filter_target_measures(measures):
@@ -32,20 +38,29 @@ def filter_target_measures(measures):
         unit = (measure.get("unitName") or "").lower()
 
         if parameter in TARGET_PARAMETERS:
+            logging.info(f"Evaluating measure: {parameter} with unit {unit}")
             if TARGET_PARAMETERS[parameter].lower() == unit or parameter == "CONDUCTIVITY":
                 selected.append(measure)
+    
+    logging.info(f"Selected measures: {[m['parameter'] for m in selected]}")
 
     return selected
 
 
-def fetch_recent_readings(measure_url, limit=10):
+def recent_readings(measure_url, limit=10):
    
     # Fetch latest readings for a measure.
     
     url = f"{measure_url}/readings.json"
     params = {"_limit": limit, "_sort": "-dateTime"}
+    
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        logging.info(f"Successfully fetched recent readings for {measure_url}.")    
+    except requests.RequestException as e:
+        logging.error(f"Error fetching recent readings for {measure_url}: {e}")
+        raise
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
-
-    return response.json().get("items", [])
+    data = response.json()
+    return data["items"]

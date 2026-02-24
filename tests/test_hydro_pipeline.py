@@ -16,7 +16,7 @@ mock_readings = [
 ]
 
 # Unit tests
-@patch("hydro_pipeline.requests.get")
+@patch("etl.extract.requests.get")
 def test_station_measures(mock_get):
     """Station measures should return a list of measure items."""
     mock_get.return_value.json.return_value = {"items": mock_measures}
@@ -29,7 +29,7 @@ def test_station_measures(mock_get):
     assert result[0]["parameter"] == "DISSOLVED OXYGEN"
 
 
-@patch("hydro_pipeline.requests.get")
+@patch("etl.extract.requests.get")
 def test_recent_readings(mock_get):
     """Recent readings should return reading data."""
     mock_get.return_value.json.return_value = {"items": mock_readings}
