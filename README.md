@@ -49,21 +49,28 @@ This approach avoids potential issues with automatic type conversions in SQLite,
 
 ## Project Structure
 
-hydrological-etl-pipeline/
-├─ etl/
-│ ├─ extract.py
-│ ├─ transform.py
-│ └─ load.py
-├─ data/
-│ ├─ raw/
-│ └─ cleaned_data/
-├─ tests/
-├─ hydro_pipeline.py # Orchestrates the ETL process
-├─ Hydrological Architecture.png
-├─ hydrological.db
-├─ README.md
-├─ requirements.txt
-└─ .gitignore
+    hydrological-etl-pipeline/
+
+    etl/
+
+        extract.py
+
+        transform.py
+
+        load.py
+
+    data/
+        raw/
+
+        cleaned_data/
+
+    tests/
+    hydro_pipeline.py # Orchestrates the ETL process
+    Hydrological Architecture.png
+    hydrological.db
+    README.md
+    requirements.txt
+    .gitignore
 
 
 ---
