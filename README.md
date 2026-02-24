@@ -50,20 +50,29 @@ measurements
 A composite UNIQUE constraint on (station_id, parameter, date_time) ensures idempotent behaviour and prevents duplicate records on re-execution.
 
 Project Structure
-etl/
-    extract.py
-    transform.py
-    load.py
-data/
-    raw/
-    cleaned_data/
-tests/
-    test_hydro_pipeline.py
-hydro_pipeline.py
-hydrological_architecture
-hydrological.db
-README.md
-requirements.txt
+
+    etl/
+        extract.py
+        transform.py
+        load.py
+
+    data/
+        raw/
+        cleaned_data/
+
+    tests/
+        
+
+    hydro_pipeline.py
+
+    hydrological_architecture
+
+    hydrological.db
+
+    README.md
+
+    requirements.txt
+
 
 hydro_pipeline.py – Orchestrates the end-to-end ETL process
 
