@@ -1,160 +1,128 @@
-Hydrological Data ETL Pipeline
-Overview
+# Hydrological Data ETL Pipeline
 
-This project implements a modular ETL pipeline that extracts hydrological measurement data from the UK Environment Agency Hydrology Data Explorer API (public dataset), transforms it into a clean analytical format, and loads it into a SQLite database structured using a simple star schema.
+## Overview
+This project implements a **modular ETL pipeline** that extracts hydrological measurement data from the UK Environment Agency Hydrology Data Explorer API (public dataset), transforms it into a clean analytical format, and loads it into a **SQLite database** structured using a simple **star schema**.
 
 The pipeline retrieves the 10 most recent readings for:
 
-Dissolved Oxygen (mg/l)
+- **Dissolved Oxygen (mg/l)**
+- **Conductivity (µS/cm)**
 
-Conductivity (µS/cm)
+**Station:** Hipper Park Road Bridge (`E64999A`)
 
-station: Hipper Park Road Bridge (E64999A)
+---
 
+## Architecture
 
-Architecture
+### ETL Approach
+- **Extract:** Retrieve measurement metadata and recent readings via REST API  
+- **Transform:** Clean, deduplicate, and standardise data using `pandas`  
+- **Load:** Store structured data in SQLite following a star schema design  
 
-ETL Approach
+**Reasoning:**  
+An ETL approach ensures data quality and validation occur before persistence, reducing the risk of storing inconsistent or malformed data.
 
-    Extract – Retrieve measurement metadata and recent readings via REST API
+### Database Design (Star Schema)
 
-    Transform – Clean, deduplicate and standardise data using pandas
+**Dimension Table:** `stations`
 
-    Load – Store structured data in SQLite following a star schema design
+| Column       | Type | Description         |
+|--------------|------|-------------------|
+| station_id   | PK   | Unique station ID |
+| station_name | Text | Station name      |
 
-An ETL approach was chosen to ensure data quality and validation occur before persistence in the database, reducing the risk of storing inconsistent or malformed data.
+**Fact Table:** `measurements`
 
+| Column      | Type | Description |
+|-------------|------|------------|
+| id          | PK   | Unique measurement ID |
+| station_id  | FK   | Links to `stations` |
+| parameter   | Text | Measurement type |
+| date_time   | Text | Timestamp of measurement |
+| value       | Real | Measurement value |
 
-Database Design (Star Schema)
+**Note on `date_time` column:**  
+In the `measurements` fact table, the `date_time` column is stored as `TEXT` to preserve the exact timestamp format returned by the Hydrological Data Explorer API.  
+This approach avoids potential issues with automatic type conversions in SQLite, ensures compatibility across platforms, and simplifies enforcing the idempotent uniqueness constraint `(station_id, parameter, date_time)`.
 
-Dimension Table:
-stations
+---
 
-    station_id (PK)
+## Project Structure
 
-    station_name
+hydrological-etl-pipeline/
+├─ etl/
+│ ├─ extract.py
+│ ├─ transform.py
+│ └─ load.py
+├─ data/
+│ ├─ raw/
+│ └─ cleaned_data/
+├─ tests/
+├─ hydro_pipeline.py # Orchestrates the ETL process
+├─ Hydrological Architecture.png
+├─ hydrological.db
+├─ README.md
+├─ requirements.txt
+└─ .gitignore
 
-Fact Table:
-measurements
 
-    id (PK)
+---
 
-    station_id (FK)
+## Requirements
 
-    parameter
+- **Python 3.10+**
+- `pandas`
+- `requests`
+- `pytest` (for running tests)
 
-    date_time
+**Tested on:** Windows 11, Python 3.10
 
-    value
+All dependencies are listed in `requirements.txt`.
 
-A composite UNIQUE constraint on (station_id, parameter, date_time) ensures idempotent behaviour and prevents duplicate records on re-execution.
+---
 
-Project Structure
+## Setup Instructions (Windows)
 
-    etl/
-        extract.py
-        transform.py
-        load.py
+1. **Clone the repository**
 
-    data/
-        raw/
-        cleaned_data/
+        git clone <repo_url>
+        cd hydrological-etl-pipeline
 
-    tests/
-        
+2. **Create a virtual environment (optional but recommended)**
 
-    hydro_pipeline.py
+        python -m venv venv
+        venv\Scripts\activate
 
-    hydrological_architecture
+3. **Install dependencies**
 
-    hydrological.db
+        pip install -r requirements.txt
 
-    README.md
+4. **Run the pipeline**
 
-    requirements.txt
+        python hydro_pipeline.py
 
+5. **Run tests**
 
-hydro_pipeline.py – Orchestrates the end-to-end ETL process
+        python -m pytest -v
 
-Requirements
-
-    Python 3.10+
-
-    pandas
-
-    requests
-
-    pytest (for running tests)
-
-All dependencies are listed in requirements.txt
-
-Tested on:
-    Windows 11
-    Python 3.13
-
-
-Setup Instructions (Windows)
-
-Clone the repository:
-
-    git clone <repo_url>
-
-Create a virtual environment (optional but recommended):
-
-    python -m venv venv
-    venv\Scripts\activate
-
-Install dependencies:
-
-    pip install -r requirements.txt
-
-Run the pipeline:
-
-    python hydro_pipeline.py
-
-Run tests:
-
-    python -m pytest -v
-
-
-Key Design Decisions
-
-    Functional modular structure for maintainability
-
-    Idempotent load using database uniqueness constraint
-
-    Logging for observability
-
-    Separation of raw and cleaned data
-
-    Windows-compatible paths
-
-
-Future Improvements
-
-Incremental Loads
-Instead of dropping the table on every run, implement incremental ingestion using  timestamps to avoid duplicate records and improve efficiency.
-
-Parameter Configuration
-Move tracked parameters (e.g., dissolved oxygen, conductivity) into a configuration file or environment variable to make the pipeline more flexible.
-
-Error Handling & Retries
-Add retry logic and structured exception handling for API failures or network interruptions.
-
-Structured Logging
-Enhance logging with configurable log levels and optional file-based logging
-
-Containerisation
-Dockerise the pipeline for portability and easier deployment.
-
-Scheduling
-Integrate with a scheduler (e.g., cron or Airflow) for automated periodic runs.
-
-Cloud Deployment
-Deploy to a cloud environment (e.g., Azure or AWS) with managed storage instead of local SQLite.
-
-Data Validation
-Add validation checks for missing values, unexpected units, or anomalous readings.
-
-CI/CD Integration
-Configure GitHub Actions to automatically run tests on pull requests.
+---
+
+## Key Design Decisions
+
+- Functional, modular structure for maintainability
+- Idempotent load using database uniqueness constraint
+- Logging for observability
+- Separation of raw and cleaned data
+- Windows-compatible paths
+
+## Future Improvements
+
+- **Incremental Loads:** Use timestamps to ingest only new data
+- **Parameter Configuration:** Move tracked parameters into config files or environment variables
+- **Error Handling & Retries:** Add structured exception handling and retry logic for API failures
+- **Structured Logging:** Configurable log levels and optional file-based logging
+- **Containerisation:** Dockerise the pipeline for portability
+- **Scheduling:** Integrate with cron or Airflow for automated runs
+- **Cloud Deployment:** Use managed storage in Azure/AWS instead of local SQLite
+- **Data Validation:** Validate missing values, units, and anomalies
+- **CI/CD Integration:** GitHub Actions to automatically run tests on pull requests
